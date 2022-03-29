@@ -1,0 +1,43 @@
+{
+    "name": "renalcio/model",
+    "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
+    "keywords": ["laravel", "eloquent", "model", "jenssegers/model"],
+    "homepage": "https://github.com/renalcio/model",
+    "license" : "MIT",
+    "authors": [
+        {
+            "name": "Jens Segers",
+            "homepage": "https://jenssegers.com"
+        },
+        {
+            "name": "Renalcio Carlos Jr.",
+            "homepage": "https://github.com/renalcio"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "require": {
+        "illuminate/contracts": "^5.0|^6.0|^7.0|^8.0",
+        "illuminate/support": "^4.0|^5.0|^6.0|^7.0|^8.0"
+    },
+    "require-dev": {
+        "php-coveralls/php-coveralls": "*",
+        "phpunit/phpunit": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "DevApex\\Model\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": ["tests/stubs"]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "custom-casts",
+            "master": "custom-casts",
+            "main": "custom-casts"
+        }
+    }
+}
