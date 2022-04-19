@@ -1,4 +1,4 @@
-<?php namespace DevApex\Model\Contracts;
+<?php namespace Renalcio\GModel\Contracts;
 
 interface CastsAttributes
 {
