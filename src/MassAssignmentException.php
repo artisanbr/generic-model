@@ -1,4 +1,4 @@
-<?php namespace DevApex\Model;
+<?php namespace Renalcio\GModel;
 
 class MassAssignmentException extends \RuntimeException
 {

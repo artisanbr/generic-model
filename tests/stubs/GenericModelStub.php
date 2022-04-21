@@ -1,6 +1,6 @@
 <?php
 
-use DevApex\Model\GenericModel;
+use Renalcio\GModel\GenericModel;
 
 class GenericModelStub extends GenericModel
 {

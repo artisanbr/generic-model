@@ -1,8 +1,8 @@
 <?php
 
-use DevApex\Model\Contracts\CastsAttributes;
-use DevApex\Model\Contracts\CastsInboundAttributes;
-use DevApex\Model\GenericModel;
+use Renalcio\GModel\Contracts\CastsAttributes;
+use Renalcio\GModel\Contracts\CastsInboundAttributes;
+use Renalcio\GModel\GenericModel;
 use PHPUnit\Framework\TestCase;
 
 /**

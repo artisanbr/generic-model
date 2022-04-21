@@ -1,11 +1,17 @@
 <?php namespace Renalcio\GModel;
 
+use Illuminate\Contracts\Database\Eloquent\Castable;
+use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Support\Collection as BaseCollection;
-use DevApex\Model\Contracts\CastsInboundAttributes;
+use Renalcio\GModel\Concerns\HasCastables;
+use Renalcio\GModel\Contracts\CastsInboundAttributes;
 use Jenssegers\Model\Model;
+use Renalcio\GModel\Contracts\CastsAttributes;
 
-abstract class GenericModel extends Model
+abstract class GenericModel extends Model implements CastsAttributes
 {
+    use HasTimestamps, HasCastables;
+
     protected $called_class = null;
 
     /**
@@ -40,10 +46,29 @@ abstract class GenericModel extends Model
         'timestamp',
     ];
 
+    protected static $nullable = false;
+
     public function __construct(array $attributes = [])
     {
         $this->called_class = $this->called_class ?? get_called_class();
         parent::__construct($attributes);
+    }
+
+    /**
+     * Is model Nullable?
+     * @return bool
+     */
+    public static function nullable() : bool {
+        return static::$nullable;
+    }
+
+    /**
+     * Get model dates
+     * @return array|bool|float|BaseCollection|int|mixed|string|null
+     */
+    public function getDates()
+    {
+        return $this->dates ?? [];
     }
 
     /**
