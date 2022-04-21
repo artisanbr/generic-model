@@ -6,6 +6,7 @@ use Jenssegers\Model\Model;
 
 abstract class GenericModel extends Model
 {
+    protected $called_class = null;
 
     /**
      * The attributes that have been cast using custom classes.
@@ -38,6 +39,12 @@ abstract class GenericModel extends Model
         'string',
         'timestamp',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->called_class = $this->called_class ?? get_called_class();
+        parent::__construct($attributes);
+    }
 
     /**
      * Convert the model's attributes to an array.
@@ -345,6 +352,32 @@ abstract class GenericModel extends Model
         $this->classCastCache = [];
 
         return $this;
+    }
+
+    protected function buildCastAttributes($value){
+
+        if(is_string($value)){
+            return json_decode($value, true);
+        }else if(is_object($value) && $value instanceof $this->called_class){
+            return $value->toArray();
+        }
+
+        return $value ?? [];
+    }
+
+    public function get($model, $key, $value, $attributes)
+    {
+        return new $this->called_class($this->buildCastAttributes($value));
+    }
+
+    public function set($model, $key, $value, $attributes)
+    {
+
+        if($value && !($value instanceof $this->called_class)){
+            $value = new $this->called_class($this->buildCastAttributes($value));
+        }
+
+        return [$key => $value];//['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
     }
 }
 
