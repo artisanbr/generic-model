@@ -147,7 +147,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     protected function addCastAttributesToArray(array $attributes, array $mutatedAttributes)
     {
-        foreach ($this->casts as $key => $value) {
+        foreach ($this->getCasts() as $key => $value) {
             if (! array_key_exists($key, $attributes) ||
                 in_array($key, $mutatedAttributes) ||
                 $this->isClassCastable($key)) {
@@ -212,13 +212,36 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     protected function resolveCasterClass($key)
     {
-        if (strpos($castType = $this->casts[$key], ':') === false) {
+        $castType = $this->getCasts()[$key];
+
+        $arguments = [];
+
+        if (is_string($castType) && str_contains($castType, ':')) {
+            $segments = explode(':', $castType, 2);
+
+            $castType = $segments[0];
+            $arguments = explode(',', $segments[1]);
+        }
+
+        if (is_subclass_of($castType, Castable::class)) {
+            $castType = $castType::castUsing($arguments);
+        }
+
+        if (is_object($castType)) {
+            return $castType;
+        }
+
+        return new $castType(...$arguments);
+
+
+
+        /*if (strpos($castType = $this->casts[$key], ':') === false) {
             return new $castType;
         }
 
         $segments = explode(':', $castType, 2);
 
-        return new $segments[0](...explode(',', $segments[1]));
+        return new $segments[0](...explode(',', $segments[1]));*/
     }
 
     /**
