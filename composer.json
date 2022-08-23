@@ -34,9 +34,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "custom-casts",
-            "master": "custom-casts",
-            "main": "custom-casts"
+            "dev-main": "1.x-dev"
         }
     }
 }
