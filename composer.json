@@ -26,7 +26,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Renalcio\\GModel\\": "src/"
+            "ArtisanLabs\\GModel\\": "src/"
         }
     },
     "autoload-dev": {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Renalcio\GModel\Concerns;
+namespace ArtisanLabs\GModel\Concerns;
 
 trait HasCastables
 {

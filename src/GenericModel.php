@@ -1,4 +1,4 @@
-<?php namespace Renalcio\GModel;
+<?php namespace ArtisanLabs\GModel;
 
 use Carbon\CarbonInterface;
 use DateTimeInterface;
@@ -18,10 +18,10 @@ use InvalidArgumentException;
 use JsonException;
 use ReflectionMethod;
 use ReflectionNamedType;
-use Renalcio\GModel\Concerns\HasCastables;
-use Renalcio\GModel\Contracts\CastsInboundAttributes;
+use ArtisanLabs\GModel\Concerns\HasCastables;
+use ArtisanLabs\GModel\Contracts\CastsInboundAttributes;
 use Jenssegers\Model\Model;
-use Renalcio\GModel\Contracts\CastsAttributes;
+use ArtisanLabs\GModel\Contracts\CastsAttributes;
 
 abstract class GenericModel extends Model implements CastsAttributes
 {
@@ -1316,7 +1316,9 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     public function get($model, $key, $value, $attributes)
     {
-        //dd("gModel get: $key", $this->buildCastAttributes($value));
+        /*if($key == "contact"){
+            dump("gModel get: $key", $this->buildCastAttributes($value));
+        }*/
         return new static($this->buildCastAttributes($value));
     }
 
@@ -1325,9 +1327,12 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     public function set($model, $key, $value, $attributes)
     {
-        //dump("gModel set: $key", $value);
+        /*if($key == "contact"){
+            dump("gModel set: $key", $value);
+        }*/
+
         if ($value) {
-            $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
+            $currentAttributes = $this->buildCastAttributes($value);
 
             return [$key => static::make($currentAttributes)->fill($this->buildCastAttributes($value))->toJson()];
         }
@@ -1336,4 +1341,4 @@ abstract class GenericModel extends Model implements CastsAttributes
     }
 }
 
-class_alias(GenericModel::class, 'Renalcio\GModel\Model');
+class_alias(GenericModel::class, 'ArtisanLabs\GModel\Model');

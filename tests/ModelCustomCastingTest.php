@@ -1,8 +1,8 @@
 <?php
 
-use Renalcio\GModel\Contracts\CastsAttributes;
-use Renalcio\GModel\Contracts\CastsInboundAttributes;
-use Renalcio\GModel\GenericModel;
+use ArtisanLabs\GModel\Contracts\CastsAttributes;
+use ArtisanLabs\GModel\Contracts\CastsInboundAttributes;
+use ArtisanLabs\GModel\GenericModel;
 use PHPUnit\Framework\TestCase;
 
 /**

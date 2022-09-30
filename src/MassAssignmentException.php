@@ -1,4 +1,4 @@
-<?php namespace Renalcio\GModel;
+<?php namespace ArtisanLabs\GModel;
 
 class MassAssignmentException extends \RuntimeException
 {
