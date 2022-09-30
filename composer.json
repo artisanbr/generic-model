@@ -1,8 +1,8 @@
 {
-    "name": "renalcio/laravel-gmodel",
+    "name": "artisan-labs/laravel-gmodel",
     "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
     "keywords": ["laravel", "eloquent", "model", "jenssegers/model"],
-    "homepage": "https://github.com/renalcio/model",
+    "homepage": "https://github.com/artisanbr/model",
     "license" : "MIT",
     "authors": [
         {
