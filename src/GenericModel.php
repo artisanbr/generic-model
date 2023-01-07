@@ -2,15 +2,15 @@
 
 namespace ArtisanLabs\GModel;
 
-use App\Models\Generics\Contact;
-use App\Models\Generics\Social\SocialNetwork;
+use ArtisanLabs\GModel\Concerns\HasCastables;
+use ArtisanLabs\GModel\Contracts\CastsAttributes;
+use ArtisanLabs\GModel\Contracts\CastsInboundAttributes;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
-use Illuminate\Database\Eloquent\InvalidCastException;
 use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Arr;
@@ -20,13 +20,11 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Jenssegers\Model\Model;
 use JsonException;
+use JsonSerializable;
 use ReflectionMethod;
 use ReflectionNamedType;
-use ArtisanLabs\GModel\Concerns\HasCastables;
-use ArtisanLabs\GModel\Contracts\CastsInboundAttributes;
-use Jenssegers\Model\Model;
-use ArtisanLabs\GModel\Contracts\CastsAttributes;
 use UnitEnum;
 
 abstract class GenericModel extends Model implements CastsAttributes
@@ -195,7 +193,8 @@ abstract class GenericModel extends Model implements CastsAttributes
     /**
      * Append attributes to query when building a query.
      *
-     * @param  array|string  $attributes
+     * @param array|string $attributes
+     *
      * @return $this
      */
     public function append(array|string $attributes): static
@@ -1407,9 +1406,94 @@ abstract class GenericModel extends Model implements CastsAttributes
     public
     function jsonSerialize(): array
     {
-        return collect($this->toArray())->forget($this->appends)->toArray(); //$this->toArray();
+
+        $attributes = $this->getArrayableAttributes();
+
+
+        $mutatedAttributes = $this->getMutatedAttributes();
+
+        // We want to spin through all the mutated attributes for this model and call
+        // the mutator for the attribute. We cache off every mutated attributes so
+        // we don't have to constantly check on attributes that actually change.
+        foreach ($mutatedAttributes as $key) {
+            if (!array_key_exists($key, $attributes)) {
+                continue;
+            }
+
+            $attributes[$key] = $this->mutateAttributeForJsonSerialize(
+                $key, $attributes[$key]
+            );
+        }
+
+        // Next we will handle any casts that have been setup for this model and cast
+        // the values to their appropriate type. If the attribute has a mutator we
+        // will not perform the cast on those attributes to avoid any confusion.
+        $attributes = $this->addCastAttributesToJsonSerialize(
+            $attributes, $mutatedAttributes
+        );
+
+        foreach ($this->getArrayableAppends() as $key) {
+            $attributes[$key] = $this->mutateAttributeForJsonSerialize($key, null);
+        }
+
+        return collect($attributes)->forget($this->appends)->toArray(); //$this->toArray();
     }
 
+
+
+    /**
+     * Add the casted attributes to the attributes array.
+     *
+     * @param array $attributes
+     * @param array $mutatedAttributes
+     *
+     * @return array
+     */
+    protected function addCastAttributesToJsonSerialize(array $attributes, array $mutatedAttributes)
+    {
+
+        foreach ($this->getCasts() as $key => $value) {
+            if (!array_key_exists($key, $attributes) ||
+                in_array($key, $mutatedAttributes)) {
+                continue;
+            }
+
+            if ($this->isClassCastable($key)) {
+
+                $castedValue = $this->castAttribute($key, $attributes[$key]);
+
+                if ($castedValue instanceof JsonSerializable && !($castedValue instanceof UnitEnum)) {
+                    $attributes[$key] = $castedValue->jsonSerialize();
+                    continue;
+                }
+            }
+
+            // Here we will cast the attribute. Then, if the cast is a date or datetime cast
+            // then we will serialize the date for the array. This will convert the dates
+            // to strings based on the date format specified for these Eloquent models.
+            $attributes[$key] = $this->castAttribute(
+                $key, $attributes[$key]
+            );
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Get the value of an attribute using its mutator for json serializable conversion.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    protected function mutateAttributeForJsonSerialize($key, $value)
+    {
+        $value = $this->mutateAttribute($key, $value);
+
+
+        return $value instanceof GenericModel ? $value->jsonSerialize() : $value;
+    }
 
     public
     static function make(array $attributes = []): static
@@ -1442,7 +1526,12 @@ abstract class GenericModel extends Model implements CastsAttributes
         if ($value) {
             $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
 
-            return [$key => static::make($currentAttributes)->fill($this->buildCastAttributes($value))->toJson()];
+            /*if ($key == 'contact') {
+                dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
+            }*/
+
+            return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
+            //return [$key => static::make($currentAttributes)->fill($this->buildCastAttributes($value))->toJson()];
         }
 
         return [$key => $value];//['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
