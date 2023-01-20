@@ -138,6 +138,8 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     protected $original = [];
 
+    protected $temporary = [];
+
     /**
      * Indicates if an exception should be thrown instead of silently discarding non-fillable attributes.
      *
@@ -1403,14 +1405,13 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return array
      */
-    public
-    function jsonSerialize(): array
+    public function jsonSerialize(): array
     {
 
-        $attributes = $this->getArrayableAttributes();
+        $attributes = collect($this->getArrayableAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
 
-        $mutatedAttributes = $this->getMutatedAttributes();
+        $mutatedAttributes = collect($this->getMutatedAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
         // We want to spin through all the mutated attributes for this model and call
         // the mutator for the attribute. We cache off every mutated attributes so
@@ -1432,11 +1433,11 @@ abstract class GenericModel extends Model implements CastsAttributes
             $attributes, $mutatedAttributes
         );
 
-        foreach ($this->getArrayableAppends() as $key) {
+        /*foreach ($this->getArrayableAppends() as $key) {
             $attributes[$key] = $this->mutateAttributeForJsonSerialize($key, null);
-        }
+        }*/
 
-        return collect($attributes)->forget($this->appends)->toArray(); //$this->toArray();
+        return collect($attributes)->forget($this->appends)->forget($this->temporary)->toArray(); //$this->toArray();
     }
 
 
@@ -1504,8 +1505,7 @@ abstract class GenericModel extends Model implements CastsAttributes
     /**
      * @throws JsonException
      */
-    public
-    function get($model, $key, $value, $attributes)
+    public function get($model, $key, $value, $attributes)
     {
         /*if($key == "contact"){
             dd("gModel get: $key", $value);
@@ -1513,28 +1513,47 @@ abstract class GenericModel extends Model implements CastsAttributes
         return new static($this->buildCastAttributes($value));
     }
 
-    /**
-     * @throws JsonException
-     */
-    public
-    function set($model, $key, $value, $attributes)
+
+    public function set($model, $key, $value, $attributes)
     {
-        /*if($key == "logo_secondary" || $key == "logo" || $key == "media"){
-            dd("gModel set: $key", $model, $value, $attributes);
+        //dd('set', $model, $key, $value, $attributes);
+        /*if($key == "logo" || $key == "logo" || $key == "media"){
+            dd("gModel set: $key", $model, $value, json_encode(static::make($this->buildCastAttributes($value))->jsonSerialize()));
         }*/
 
         if ($value) {
-            $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
 
-            /*if ($key == 'contact') {
-                dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
+            /*if($value instanceof JsonSerializable){
+                //return [$key => json_encode($value->jsonSerialize())];
+
+                $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
+
+                return [$key => json_encode(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())];
+            }
+
+            if(is_array($value) || is_object($value)){
+                return [$key => json_encode(static::make()->fill($this->buildCastAttributes($value))->jsonSerialize())];
             }*/
 
-            return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
+
+            if ($value) {
+                $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
+
+                /*if ($key == 'contact') {
+                    dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
+                }*/
+
+                return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
+                //return [$key => static::make($currentAttributes)->fill($this->buildCastAttributes($value))->toJson()];
+            }
+
+
             //return [$key => static::make($currentAttributes)->fill($this->buildCastAttributes($value))->toJson()];
+
+            //return [$key => json_encode($value)];
         }
 
-        return [$key => $value];//['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
+        return [$key => json_encode($value)];//['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
     }
 }
 

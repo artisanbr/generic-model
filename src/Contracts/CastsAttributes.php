@@ -3,24 +3,24 @@
 interface CastsAttributes
 {
     /**
-     * Transform the attribute from the underlying model values.
-     *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @param  string  $key
-     * @param  mixed  $value
-     * @param  array  $attributes
-     * @return mixed
-     */
-    public function get($model, $key, $value, $attributes);
-
-    /**
-     * Transform the attribute to its underlying model values.
+     * Cast the given value.
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @param  string  $key
      * @param  mixed  $value
      * @param  array  $attributes
      * @return array
+     */
+    public function get($model, $key, $value, $attributes);
+
+    /**
+     * Prepare the given value for storage.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  string  $key
+     * @param  array  $value
+     * @param  array  $attributes
+     * @return string
      */
     public function set($model, $key, $value, $attributes);
 }
