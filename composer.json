@@ -27,7 +27,7 @@
     {
       "type": "path",
       "canonical": true,
-      "url": "./packages/*/*",
+      "url": "./packages/artisan-labs/*",
       "options": {
         "symlink": true,
           "versions": {
