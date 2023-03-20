@@ -1,3 +1,0 @@
-[submodule "packages/jessengers/model"]
-	path = packages/jessengers/model
-	url = https://github.com/jenssegers/model

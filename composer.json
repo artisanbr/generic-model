@@ -27,17 +27,17 @@
     {
       "type": "path",
       "canonical": true,
-      "url": "./packages/artisan-labs/*",
+      "url": "./packages/jessengers/model",
       "options": {
         "symlink": true,
           "versions": {
-              "jenssegers/model": "dev-stable"
+              "jenssegers/model": "1.5.x-dev"
           }
       }
     }
   ],
   "require": {
-    "jenssegers/model": "dev-stable"
+    "jenssegers/model": "1.5.x-dev"
   },
   "require-dev": {
     "php-coveralls/php-coveralls": "*",
