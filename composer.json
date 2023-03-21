@@ -1,42 +1,58 @@
 {
-    "name": "artisan-labs/laravel-gmodel",
-    "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
-    "keywords": ["laravel", "eloquent", "model", "jenssegers/model"],
-    "homepage": "https://github.com/artisanbr/model",
-    "license" : "MIT",
-    "authors": [
-        {
-            "name": "Jens Segers",
-            "homepage": "https://jenssegers.com"
-        },
-        {
-            "name": "Renalcio Carlos Jr.",
-            "homepage": "https://github.com/renalcio"
-        }
-    ],
-    "config": {
-        "sort-packages": true
+  "name": "artisan-labs/laravel-gmodel",
+  "version": "dev-stable",
+  "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
+  "keywords": [
+    "laravel",
+    "eloquent",
+    "model",
+    "jenssegers/model"
+  ],
+  "homepage": "https://github.com/artisanbr/model",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jens Segers",
+      "homepage": "https://jenssegers.com"
     },
-    "require": {
-        "jenssegers/model": "^1.5"
-    },
-    "require-dev": {
-        "php-coveralls/php-coveralls": "*",
-        "phpunit/phpunit": "*"
-    },
-    "autoload": {
-        "psr-4": {
-            "ArtisanLabs\\GModel\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "classmap": ["tests/stubs"]
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-main": "1.6-dev",
-            "master": "dev-main",
-            "dev": "dev-main"
-        }
+    {
+      "name": "Renalcio Carlos Jr.",
+      "homepage": "https://github.com/renalcio"
     }
+  ],
+  "config": {
+    "sort-packages": true
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "canonical": true,
+      "url": "./packages/jessengers/model",
+      "options": {
+        "symlink": true,
+          "versions": {
+              "jenssegers/model": "dev-stable"
+          }
+      }
+    }
+  ],
+  "require": {
+    "jenssegers/model": "@dev"
+  },
+  "require-dev": {
+    "php-coveralls/php-coveralls": "*",
+    "phpunit/phpunit": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ArtisanLabs\\GModel\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "classmap": [
+      "tests/stubs"
+    ]
+  },
+  "extra": {
+  }
 }
