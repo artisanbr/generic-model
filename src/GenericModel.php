@@ -701,7 +701,7 @@ abstract class GenericModel extends Model implements CastsAttributes
                 return $this->fromJson($value, true);
             case 'array':
             case 'json':
-                return $this->fromJson($value);
+                return is_string($value) ? $this->fromJson($value) : $value;
             case 'collection':
                 return new BaseCollection(is_string($value) ? $this->fromJson($value) : $value);
             case 'date':
@@ -801,7 +801,7 @@ abstract class GenericModel extends Model implements CastsAttributes
             $this->attributes[$key] = $value->value;
         }
         else {
-            $this->attributes[$key] = $enumClass::from($value)->value;
+            $this->attributes[$key] = $enumClass::tryFrom($value)?->value ?? null;
         }
     }
 
