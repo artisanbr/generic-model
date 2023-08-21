@@ -1,4 +1,8 @@
 <?php
+/*
+ * Copyright (c) 2023. Tanda Interativa - Todos os Direitos Reservados
+ * Desenvolvido por Renalcio Carlos Jr.
+ */
 
 namespace ArtisanLabs\GModel;
 
@@ -1424,19 +1428,25 @@ abstract class GenericModel extends Model implements CastsAttributes
 
         try {
 
-        if (is_string($value)) {
-            return $value ? json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY) ?: [] : [];
+            if (is_string($value)) {
+                return $value ? json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY) ?: [] : [];
 
-        }
+            }
 
-        if ($value instanceof static) {
-            return $value->toArray();
-        }
+            if ($value instanceof static) {
+                return $value->toArray();
+            }
 
-        return $value ?: [];
+            return $value ?? [];
 
         } catch (\Exception $e) {
-            dump($value);
+            dd([
+                   'code'    => $e->getCode(),
+                   'message' => $e->getMessage(),
+                   'file'    => $e->getFile(),
+                   'line'    => $e->getLine(),
+               ]);
+
         }
     }
 
@@ -1546,13 +1556,13 @@ abstract class GenericModel extends Model implements CastsAttributes
     public function get($model, $key, $value, $attributes)
     {
         try {
-        /*if($key == "breadcrumb"){
-            dd($this->isNullable() && empty($value));
-            dd("gModel get: $key", $value);
-            //dd($this->isNullable());
-        }*/
+            /*if($key == "breadcrumb"){
+                dd($this->isNullable() && empty($value));
+                dd("gModel get: $key", $value);
+                //dd($this->isNullable());
+            }*/
 
-        return ($this->isNullable() && empty($value)) ? null : new static($this->buildCastAttributes($value));
+            return ($this->isNullable() && empty($value)) ? null : new static($this->buildCastAttributes($value));
 
         } catch (\Exception $e) {
             dump("exception get: $key", $value, $attributes[$key]);
