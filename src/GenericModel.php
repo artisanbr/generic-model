@@ -1441,10 +1441,12 @@ abstract class GenericModel extends Model implements CastsAttributes
 
         } catch (\Exception $e) {
             dd([
+                   'value'   => $value,
                    'code'    => $e->getCode(),
                    'message' => $e->getMessage(),
                    'file'    => $e->getFile(),
                    'line'    => $e->getLine(),
+                   'trace'   => $e->getTrace(),
                ]);
 
         }
