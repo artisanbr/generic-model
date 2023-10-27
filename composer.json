@@ -23,21 +23,9 @@
   "config": {
     "sort-packages": true
   },
-  "repositories": [
-    {
-      "type": "path",
-      "canonical": true,
-      "url": "./packages/jessengers/model",
-      "options": {
-        "symlink": true,
-          "versions": {
-              "jenssegers/model": "dev-stable"
-          }
-      }
-    }
-  ],
   "require": {
-    "jenssegers/model": "@dev"
+    "laravel/framework": ">=9",
+    "jenssegers/model": "^1.5"
   },
   "require-dev": {
     "php-coveralls/php-coveralls": "*",

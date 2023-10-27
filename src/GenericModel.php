@@ -7,11 +7,12 @@
 namespace ArtisanLabs\GModel;
 
 use ArtisanLabs\GModel\Concerns\HasCastables;
-use ArtisanLabs\GModel\Contracts\CastsAttributes;
-use ArtisanLabs\GModel\Contracts\CastsInboundAttributes;
+use ArtisanLabs\GModel\Contracts\CastsAttributes as GenericCastsAttributes;
+use ArtisanLabs\GModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Database\Eloquent\Castable;
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
@@ -31,11 +32,14 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use UnitEnum;
 
-abstract class GenericModel extends Model implements CastsAttributes
+abstract class GenericModel extends Model implements CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
 {
     use HasTimestamps, HasCastables;
 
     protected $called_class = null;
+
+    //Fix desnecessary loop
+    protected $relations = [];
 
     /**
      * The attributes that have been cast using custom classes.
@@ -297,23 +301,26 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     public function attributesToArray()
     {
+
         $attributes = $this->getArrayableAttributes();
 
 
         $mutatedAttributes = $this->getMutatedAttributes();
 
+
         // We want to spin through all the mutated attributes for this model and call
         // the mutator for the attribute. We cache off every mutated attributes so
         // we don't have to constantly check on attributes that actually change.
-        foreach ($mutatedAttributes as $key) {
-            if (!array_key_exists($key, $attributes)) {
+        foreach ($mutatedAttributes as $attribute => $value) {
+            if (!array_key_exists($attribute, $attributes)) {
                 continue;
             }
 
-            $attributes[$key] = $this->mutateAttributeForArray(
-                $key, $attributes[$key]
+            $attributes[$attribute] = $this->mutateAttributeForArray(
+                $attribute, $value
             );
         }
+
 
         // Next we will handle any casts that have been setup for this model and cast
         // the values to their appropriate type. If the attribute has a mutator we
@@ -326,11 +333,12 @@ abstract class GenericModel extends Model implements CastsAttributes
         // as these attributes are not really in the attributes array, but are run
         // when we need to array or JSON the model for convenience to the coder.
 
-        foreach ($this->getArrayableAppends() as $key) {
-            $attributes[$key] = $this->mutateAttributeForArray($key, null);
+        foreach ($attributes as $attribute => $value) {
+            $attributes[$attribute] = $this->mutateAttributeForArray($attribute, $value);
         }
 
-        parent::attributesToArray();
+        //return parent::attributesToArray();
+
 
         return $attributes;
     }
@@ -347,8 +355,22 @@ abstract class GenericModel extends Model implements CastsAttributes
     {
         $value = $this->mutateAttribute($key, $value);
 
-
         return $value instanceof Arrayable ? $value->toArray() : $value;
+    }
+
+    /**
+     * Get the value of an attribute using its mutator.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    protected function mutateAttribute($key, $value)
+    {
+        $mutateFuncName = 'get' . Str::studly($key) . 'Attribute';
+
+        return method_exists($this, $mutateFuncName) ? $this->{$mutateFuncName}($value) : $value;
     }
 
     /**
@@ -361,29 +383,55 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     protected function addCastAttributesToArray(array $attributes, array $mutatedAttributes)
     {
-
         foreach ($this->getCasts() as $key => $value) {
             if (!array_key_exists($key, $attributes) ||
                 in_array($key, $mutatedAttributes)) {
                 continue;
             }
 
-            if ($this->isClassCastable($key)) {
+            $castedValue = $this->castAttribute($key, $attributes[$key]);
+
+
+            if (!($castedValue instanceof UnitEnum) && $castedValue instanceof Arrayable) {
+                $attributes[$key] = $castedValue->toArray();
+                continue;
+            }
+            else if ($castedValue instanceof UnitEnum) {
+                $attributes[$key] = $castedValue->value;
+                continue;
+            }
+            else {
+                // Here we will cast the attribute. Then, if the cast is a date or datetime cast
+                // then we will serialize the date for the array. This will convert the dates
+                // to strings based on the date format specified for these Eloquent models.
+                $attributes[$key] = $castedValue;
+                continue;
+            }
+
+
+            /*if ($this->isClassCastable($key)) {
 
                 $castedValue = $this->castAttribute($key, $attributes[$key]);
 
-                if ($castedValue instanceof Arrayable && !($castedValue instanceof UnitEnum)) {
+
+                if (!($castedValue instanceof UnitEnum) && $castedValue instanceof Arrayable) {
                     $attributes[$key] = $castedValue->toArray();
                     continue;
+                }else if ($castedValue instanceof UnitEnum) {
+                    $attributes[$key] = $castedValue->value;
+                    continue;
                 }
-            }
 
-            // Here we will cast the attribute. Then, if the cast is a date or datetime cast
-            // then we will serialize the date for the array. This will convert the dates
-            // to strings based on the date format specified for these Eloquent models.
-            $attributes[$key] = $this->castAttribute(
-                $key, $attributes[$key]
-            );
+            }else{
+                // Here we will cast the attribute. Then, if the cast is a date or datetime cast
+                // then we will serialize the date for the array. This will convert the dates
+                // to strings based on the date format specified for these Eloquent models.
+                $attributes[$key] = $this->castAttribute(
+                    $key, $attributes[$key]
+                );
+            }*/
+
+
         }
 
         return $attributes;
@@ -394,8 +442,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return array
      */
-    protected
-    function getArrayableAttributes()
+    protected function getArrayableAttributes()
     {
         return $this->getArrayableItems($this->getAttributes());
     }
@@ -407,9 +454,9 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function getAttributeValue($key)
+    protected function getAttributeValue($key)
     {
+        //dump("getAttributeValue: {$key}", $this, debug_backtrace(0, 10));
         return $this->transformModelValue($key, $this->getAttributeFromArray($key));
     }
 
@@ -421,9 +468,9 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function transformModelValue($key, $value)
+    protected function transformModelValue($key, $value)
     {
+
         // If the attribute has a get mutator, we will call that then return what
         // it returns as the value, which is useful for transforming values on
         // retrieval from the model to a form that is more useful for usage.
@@ -465,8 +512,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function mutateAttributeMarkedAttribute($key, $value)
+    protected function mutateAttributeMarkedAttribute($key, $value)
     {
         if (array_key_exists($key, $this->attributeCastCache)) {
             return $this->attributeCastCache[$key];
@@ -495,8 +541,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    public
-    function hasAttributeGetMutator($key)
+    public function hasAttributeGetMutator($key)
     {
         if (isset(static::$getAttributeMutatorCache[get_class($this)][$key])) {
             return static::$getAttributeMutatorCache[get_class($this)][$key];
@@ -516,8 +561,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    public
-    function hasAttributeMutator($key): bool
+    public function hasAttributeMutator($key): bool
     {
         if (isset(static::$attributeMutatorCache[get_class($this)][$key])) {
             return static::$attributeMutatorCache[get_class($this)][$key];
@@ -541,8 +585,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function getAttributeFromArray($key)
+    protected function getAttributeFromArray($key)
     {
         return $this->getAttributes()[$key] ?? null;
     }
@@ -554,8 +597,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isClassCastable($key)
+    protected function isClassCastable($key)
     {
 
         $casts = $this->getCasts();
@@ -586,8 +628,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function resolveCasterClass($key)
+    protected function resolveCasterClass($key)
     {
         $castType = $this->getCasts()[$key];
 
@@ -627,8 +668,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    protected
-    function parseCasterClass($class)
+    protected function parseCasterClass($class)
     {
         return strpos($class, ':') === false
             ? $class
@@ -640,19 +680,24 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return void
      */
-    protected
-    function mergeAttributesFromClassCasts()
+    protected function mergeAttributesFromClassCasts()
     {
+        $resolvedAttributes = [];
         foreach ($this->classCastCache as $key => $value) {
             $caster = $this->resolveCasterClass($key);
-
-            $this->attributes = array_merge(
+            $resolvedAttributes[$key] = $caster instanceof GenericCastsInboundAttributes ? [$key => $value] : $this->normalizeCastClassResponse($key, $caster->set($this, $key, $value, $this->attributes));
+            /*$this->attributes = array_merge(
                 $this->attributes,
                 $caster instanceof CastsInboundAttributes
                     ? [$key => $value]
                     : $this->normalizeCastClassResponse($key, $caster->set($this, $key, $value, $this->attributes))
-            );
+            );*/
         }
+
+        $this->attributes = array_merge(
+            $this->attributes,
+            $resolvedAttributes
+        );
     }
 
     /**
@@ -663,8 +708,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return array
      */
-    protected
-    function normalizeCastClassResponse($key, $value)
+    protected function normalizeCastClassResponse($key, $value)
     {
         return is_array($value) ? $value : [$key => $value];
     }
@@ -677,10 +721,10 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function castAttribute($key, $value)
+    protected function castAttribute($key, $value)
     {
         $castType = $this->getCastType($key);
+
 
         if (is_null($value) && in_array($castType, static::$primitiveCastTypes)) {
             return $value;
@@ -726,6 +770,7 @@ abstract class GenericModel extends Model implements CastsAttributes
             return $this->getEnumCastableAttributeValue($key, $value);
         }
 
+
         if ($this->isClassCastable($key)) {
             return $this->getClassCastableAttributeValue($key);
         }
@@ -741,8 +786,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isEnumCastable($key)
+    protected function isEnumCastable($key)
     {
         $casts = $this->getCasts();
 
@@ -769,8 +813,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function getEnumCastableAttributeValue($key, $value)
+    protected function getEnumCastableAttributeValue($key, $value)
     {
         if (is_null($value)) {
             return;
@@ -793,8 +836,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return void
      */
-    protected
-    function setEnumCastableAttribute($key, $value)
+    protected function setEnumCastableAttribute($key, $value)
     {
         $enumClass = $this->getCasts()[$key];
 
@@ -816,8 +858,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return int
      */
-    protected
-    function asTimestamp($value)
+    protected function asTimestamp($value)
     {
         return $this->asDateTime($value)->getTimestamp();
     }
@@ -829,8 +870,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return \Illuminate\Support\Carbon
      */
-    protected
-    function asDate($value)
+    protected function asDate($value)
     {
         return $this->asDateTime($value)->startOfDay();
     }
@@ -842,8 +882,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return \Illuminate\Support\Carbon
      */
-    protected
-    function asDateTime($value)
+    protected function asDateTime($value)
     {
         // If this value is already a Carbon instance, we shall just return it as is.
         // This prevents us having to re-instantiate a Carbon instance when we know
@@ -897,8 +936,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    public
-    function hasCast($key, $types = null)
+    public function hasCast($key, $types = null)
     {
         if (array_key_exists($key, $this->getCasts())) {
             return $types ? in_array($this->getCastType($key), (array)$types, true) : true;
@@ -914,8 +952,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    protected
-    function getCastType($key)
+    protected function getCastType($key)
     {
         $castType = $this->getCasts()[$key];
 
@@ -946,8 +983,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isCustomDateTimeCast($cast)
+    protected function isCustomDateTimeCast($cast)
     {
         return str_starts_with($cast, 'date:') ||
             str_starts_with($cast, 'datetime:');
@@ -960,8 +996,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isImmutableCustomDateTimeCast($cast)
+    protected function isImmutableCustomDateTimeCast($cast)
     {
         return str_starts_with($cast, 'immutable_date:') ||
             str_starts_with($cast, 'immutable_datetime:');
@@ -974,8 +1009,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isDecimalCast($cast)
+    protected function isDecimalCast($cast)
     {
         return str_starts_with($cast, 'decimal:');
     }
@@ -987,8 +1021,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string|null
      */
-    public
-    function fromDateTime($value)
+    public function fromDateTime($value)
     {
         return empty($value) ? $value : $this->asDateTime($value)->format(
             $this->getDateFormat()
@@ -1002,8 +1035,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isDateAttribute($key)
+    protected function isDateAttribute($key)
     {
         return in_array($key, $this->getDates(), true) ||
             $this->isDateCastable($key);
@@ -1016,8 +1048,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isDateCastable($key)
+    protected function isDateCastable($key)
     {
         return $this->hasCast($key, ['date', 'datetime', 'immutable_date', 'immutable_datetime']);
     }
@@ -1027,8 +1058,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    public
-    function getDateFormat()
+    public function getDateFormat()
     {
         return $this->dateFormat;
     }
@@ -1040,8 +1070,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isStandardDateFormat($value)
+    protected function isStandardDateFormat($value)
     {
         return preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value);
     }
@@ -1054,8 +1083,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    protected
-    function asDecimal($value, $decimals)
+    protected function asDecimal($value, $decimals)
     {
         return number_format($value, $decimals, '.', '');
     }
@@ -1067,8 +1095,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    public
-    function fromFloat($value)
+    public function fromFloat($value)
     {
         return match ((string)$value) {
             'Infinity' => INF,
@@ -1086,8 +1113,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    protected
-    function castAttributeAsJson($key, $value)
+    protected function castAttributeAsJson($key, $value)
     {
         $value = $this->asJson($value);
 
@@ -1108,8 +1134,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return $this
      */
-    public
-    function fillJsonAttribute($key, $value)
+    public function fillJsonAttribute($key, $value)
     {
         [$key, $path] = explode('->', $key, 2);
 
@@ -1136,8 +1161,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return string
      */
-    protected
-    function castAttributeAsEncryptedString($key, $value)
+    protected function castAttributeAsEncryptedString($key, $value)
     {
         return (static::$encrypter ?? Crypt::getFacadeRoot())->encrypt($value, false);
     }
@@ -1149,8 +1173,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    protected
-    function isEncryptedCastable($key)
+    protected function isEncryptedCastable($key)
     {
         return $this->hasCast($key, [
             'encrypted',
@@ -1170,8 +1193,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return $this
      */
-    protected
-    function getArrayAttributeWithValue($path, $key, $value)
+    protected function getArrayAttributeWithValue($path, $key, $value)
     {
         return tap($this->getArrayAttributeByKey($key), function (&$array) use ($path, $value) {
             Arr::set($array, str_replace('->', '.', $path), $value);
@@ -1185,8 +1207,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return array
      */
-    protected
-    function getArrayAttributeByKey($key)
+    protected function getArrayAttributeByKey($key)
     {
         if (!isset($this->attributes[$key])) {
             return [];
@@ -1206,8 +1227,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function getClassCastableAttributeValue($key)
+    protected function getClassCastableAttributeValue($key)
     {
         if (isset($this->classCastCache[$key])) {
             return $this->classCastCache[$key];
@@ -1215,9 +1235,15 @@ abstract class GenericModel extends Model implements CastsAttributes
         else {
             $caster = $this->resolveCasterClass($key);
 
-            return $this->classCastCache[$key] = $caster instanceof CastsInboundAttributes
+            if ($caster instanceof GenericCastsAttributes || $caster instanceof CastsAttributes || $caster instanceof Castable) {
+                return $this->classCastCache[$key] = $caster->get($this, $key, $this->attributes[$key] ?? null, $this->attributes);
+            }
+
+            return $this->classCastCache[$key] = ($this->attributes[$key] ?? null);
+
+            /*return $this->classCastCache[$key] = $caster instanceof GenericCastsInboundAttributes
                 ? ($this->attributes[$key] ?? null)
-                : $caster->get($this, $key, $this->attributes[$key] ?? null, $this->attributes);
+                : $caster->get($this, $key, $this->attributes[$key] ?? null, $this->attributes);*/
         }
     }
 
@@ -1229,8 +1255,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return $this
      */
-    public
-    function setAttribute($key, $value)
+    public function setAttribute($key, $value)
     {
         // First we will check for the presence of a mutator for the set operation
         // which simply lets the developers tweak the attribute as it is set on
@@ -1291,8 +1316,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function setAttributeMarkedMutatedAttributeValue($key, $value)
+    protected function setAttributeMarkedMutatedAttributeValue($key, $value)
     {
         $attribute = $this->{Str::camel($key)}();
 
@@ -1322,8 +1346,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return bool
      */
-    public
-    function hasAttributeSetMutator($key)
+    public function hasAttributeSetMutator($key)
     {
         $class = get_class($this);
 
@@ -1351,8 +1374,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return mixed
      */
-    protected
-    function setMutatedAttributeValue($key, $value)
+    protected function setMutatedAttributeValue($key, $value)
     {
         return $this->{'set' . Str::studly($key) . 'Attribute'}($value);
     }
@@ -1365,8 +1387,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return void
      */
-    protected
-    function setClassCastableAttribute($key, $value)
+    protected function setClassCastableAttribute($key, $value)
     {
         if (is_null($value)) {
             $this->attributes = array_merge($this->attributes, array_map(
@@ -1394,8 +1415,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return array
      */
-    public
-    function getAttributes()
+    public function getAttributes()
     {
         $this->mergeAttributesFromClassCasts();
 
@@ -1409,8 +1429,7 @@ abstract class GenericModel extends Model implements CastsAttributes
      *
      * @return $this
      */
-    public
-    function setRawAttributes(array $attributes)
+    public function setRawAttributes(array $attributes)
     {
         $this->attributes = $attributes;
 
@@ -1422,22 +1441,38 @@ abstract class GenericModel extends Model implements CastsAttributes
     /**
      * @throws JsonException
      */
-    protected
-    function buildCastAttributes(string|self|array|null $value): array
+    protected function castRawValue(string|self|array|null $value): array
     {
 
         try {
 
-            if (is_string($value)) {
-                return $value ? json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY) ?: [] : [];
+            if (is_string($value) && Str::isJson($value)) {
+
+                /*dump([
+                         'method'           => 'castRawValue',
+                         'value'       => $value,
+                         'json_decode'       => json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY),
+                     ]);*/
+
+                return json_decode($value, true, 512, JSON_OBJECT_AS_ARRAY);
 
             }
 
-            if ($value instanceof static) {
+            if ($value instanceof Arrayable) {
                 return $value->toArray();
             }
 
-            return $value ?? [];
+            if (empty($value)) {
+                //dd(json_decode($value, true, 512, JSON_OBJECT_AS_ARRAY));
+                return [];
+            }
+
+            return $value;
+
+            /*if (is_string($value)) {
+                return $value ? json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY) ?: [] : [];
+
+            }*/
 
         } catch (\Exception $e) {
             dd([
@@ -1448,7 +1483,6 @@ abstract class GenericModel extends Model implements CastsAttributes
                    'line'    => $e->getLine(),
                    'trace'   => $e->getTrace(),
                ]);
-
         }
     }
 
@@ -1459,6 +1493,11 @@ abstract class GenericModel extends Model implements CastsAttributes
      */
     public function jsonSerialize(): array
     {
+
+        $attributesArray = $this->toArray();
+
+
+        return collect($attributesArray)->forget($this->appends)->forget($this->temporary)->toArray();
 
         $attributes = collect($this->getArrayableAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
@@ -1558,36 +1597,147 @@ abstract class GenericModel extends Model implements CastsAttributes
     public function get($model, $key, $value, $attributes)
     {
         try {
+
+            /*dump([
+                     'type'  => 'get',
+                     'key'   => $key,
+                     'value' => $value,
+
+                     //'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
+
+                     //'attributes' => $attributes,
+                     //'model'      => $model,
+                     //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
+                 ]);*/
+
+            /*if ($key) {
+                dump([
+                         'type'  => 'get',
+                         'key'   => $key,
+                         'value' => $value,
+
+                         'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
+
+                         'attributes' => $attributes,
+                         'model'      => $model,
+                         'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
+                     ]);
+            }*/
+
             /*if($key == "breadcrumb"){
                 dd($this->isNullable() && empty($value));
                 dd("gModel get: $key", $value);
                 //dd($this->isNullable());
             }*/
 
-            return ($this->isNullable() && empty($value)) ? null : new static($this->buildCastAttributes($value));
+            /*dump([
+                     'type'       => 'get',
+                     'key'        => $key,
+                     'value'      => $value,
+                     'attributes' => $attributes,
+                     'model'      => $model,
+                     'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5),
+                 ]);*/
+
+            //dd(new static($this->buildCastAttributes($value)));
+
+            //dd(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5), 'get:', $model, $key, $value, $this->castRawValue($value));
+
+            return ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value));
 
         } catch (\Exception $e) {
-            dump("exception get: $key", $value, $attributes[$key]);
+            //dump("exception get: $key", $value, $attributes[$key]);
+            dump([
+                     'exception type'  => 'get',
+                     'key'   => $key,
+                     'value' => $value,
+
+                     //'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
+
+                     //'attributes' => $attributes,
+                     //'model'      => $model,
+                     //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
+                 ]);
+            throw $e;
         }
     }
 
 
     public function set($model, $key, $value, $attributes)
     {
-        /*if ($key == 'breadcrumb') {
-            dd("gModel set: $key", $value, $attributes[$key]);
+        /*if ($key == 'separator') {
+            dd("gModel set: $key", $value, $attributes[$key], $attributes, $model);
             dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
         }*/
 
         try {
-            if ($value) {
 
-                $currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
-
-                return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
+            //Se o valor for nulo e a model atual for nullable
+            if ((!$value || empty($value)) && !$this->isNullable()) {
+                return null; // [$key => null];
             }
 
-            return [$key => ($this->isNullable() && empty($value)) ? null : json_encode($value)];//['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
+            $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
+
+            //$mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+
+            $mergeResult = collect($currentAttributes)->replaceRecursive($this->castRawValue($value))->toArray();
+
+            return [
+                $key => json_encode($mergeResult),
+            ];
+
+            /*if ($key) {
+                dd([
+               'type'  => 'set',
+               'key'   => $key,
+               'value' => $value,
+               'currentAttributes' => $currentAttributes,
+               'merge' => $mergeResult,
+               'result' => [
+                   $key => json_encode($mergeResult),
+               ],
+
+               'attributes' => $attributes,
+               //'model'      => $model,
+               //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
+           ]);
+            }*/
+
+
+            /*return [$key => collect(static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize())->toJson()];
+
+            $currentCastValue = $this->transformModelValue($key, $attributes[$key] ?? []);
+            //dd('set:',$model, $key, $value, $attributes);
+
+            //Se o valor não for nulo:
+            $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
+
+            dd('set:', [$key => static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize()], debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10));
+
+            if ($value instanceof Arrayable) {
+                return [$key => json_encode($value->toArray())];
+            }
+
+            if ($value instanceof Jsonable) {
+                return [$key => $value->toJson()];
+            }
+
+            if (Str::isJson($value)) {
+                return [$key => $value];
+            }
+
+            return [$key => collect(static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize())->toJson()];*/
+
+            //$currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
+
+            //dd('set:', $key, $value, $attributes, $currentAttributes, [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()], debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10));
+
+            //return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
+
+
+            //return [$key => ($this->isNullable() && empty($value)) ? null : json_encode($value)];
+            //['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
 
         } catch (\Exception $e) {
             dump("exception set: $key", $value, $attributes[$key]);
