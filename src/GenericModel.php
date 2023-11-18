@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Date;
@@ -335,6 +336,13 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
 
         foreach ($attributes as $attribute => $value) {
             $attributes[$attribute] = $this->mutateAttributeForArray($attribute, $value);
+        }
+
+        // Here we will grab all of the appended, calculated attributes to this model
+        // as these attributes are not really in the attributes array, but are run
+        // when we need to array or JSON the model for convenience to the coder.
+        foreach ($this->getArrayableAppends() as $key) {
+            $attributes[$key] = $this->mutateAttributeForArray($key, null);
         }
 
         //return parent::attributesToArray();
@@ -1441,7 +1449,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
     /**
      * @throws JsonException
      */
-    protected function castRawValue(string|self|array|null $value): array
+    protected function castRawValue($value): array
     {
 
         try {
@@ -1458,7 +1466,11 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
 
             }
 
-            if ($value instanceof Arrayable) {
+            if ($value instanceof Collection) {
+                return $value->values()->toArray();
+            }
+
+            if ($value instanceof Arrayable || (is_object($value) && method_exists($value, 'toArray'))) {
                 return $value->toArray();
             }
 
@@ -1648,13 +1660,13 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
         } catch (\Exception $e) {
             //dump("exception get: $key", $value, $attributes[$key]);
             dump([
-                     'exception type'  => 'get',
-                     'key'   => $key,
-                     'value' => $value,
+                     'exception type' => 'get',
+                     'key'            => $key,
+                     'value'          => $value,
 
                      //'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
 
-                     //'attributes' => $attributes,
+                     'attributes' => $attributes,
                      //'model'      => $model,
                      //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
                  ]);
@@ -1673,15 +1685,34 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
         try {
 
             //Se o valor for nulo e a model atual for nullable
-            if ((!$value || empty($value)) && !$this->isNullable()) {
-                return null; // [$key => null];
+            if (is_null($value) && $this->isNullable()) {
+                return [$key => null]; //null;
             }
 
             $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
 
-            //$mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+            $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
 
-            $mergeResult = collect($currentAttributes)->replaceRecursive($this->castRawValue($value))->toArray();
+            //$mergeResult = collect($currentAttributes)->replaceRecursive($this->castRawValue($value))->toArray();
+            //$mergeResult = $this->castRawValue($value);
+
+            if (Str::contains(get_class($model), 'Resource') && $key == 'css') {
+                /*dump([
+                         'type'              => 'set',
+                         'key'               => $key,
+                         'value'             => $value,
+                         'currentAttributes' => $currentAttributes,
+                         'merge'             => $mergeResult,
+                         'result'            => [
+                             $key => json_encode($mergeResult),
+                         ],
+
+                         //'attributes' => $attributes,
+                         //'attributes_current' => $attributes[$key] ?? null,
+                         //'model'      => $model,
+                         'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25),
+                     ]);*/
+            }
 
             return [
                 $key => json_encode($mergeResult),
