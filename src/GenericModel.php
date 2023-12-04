@@ -300,13 +300,14 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
      *
      * @return array
      */
-    public function attributesToArray()
+    public function attributesToArray(): array
     {
 
         $attributes = $this->getArrayableAttributes();
 
 
         $mutatedAttributes = $this->getMutatedAttributes();
+        $appendAttributes = $this->getArrayableAppends();
 
 
         // We want to spin through all the mutated attributes for this model and call
@@ -342,7 +343,8 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
         // as these attributes are not really in the attributes array, but are run
         // when we need to array or JSON the model for convenience to the coder.
         foreach ($this->getArrayableAppends() as $key) {
-            $attributes[$key] = $this->mutateAttributeForArray($key, null);
+
+            $attributes[$key] = $this->mutateAttributeForArray($key, $attributes[$key] ?? null);
         }
 
         //return parent::attributesToArray();
@@ -735,7 +737,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
 
 
         if (is_null($value) && in_array($castType, static::$primitiveCastTypes)) {
-            return $value;
+            return null;
         }
 
         switch ($castType) {
@@ -754,7 +756,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
             case 'boolean':
                 return (bool)$value;
             case 'object':
-                return $this->fromJson($value, true);
+                return is_string($value) ? $this->fromJson($value, true) : $value;
             case 'array':
             case 'json':
                 return is_string($value) ? $this->fromJson($value) : $value;
@@ -1431,6 +1433,18 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
     }
 
     /**
+     * Decode the given JSON back into an array or object.
+     *
+     * @param  string  $value
+     * @param  bool  $asObject
+     * @return mixed
+     */
+    public function fromJson($value, $asObject = false)
+    {
+        return json_decode(is_string($value) ? $value : json_encode($value), ! $asObject);
+    }
+
+    /**
      * Set the array of model attributes. No checking is done.
      *
      * @param array $attributes
@@ -1479,7 +1493,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
                 return [];
             }
 
-            return $value;
+            return (array)$value;
 
             /*if (is_string($value)) {
                 return $value ? json_decode($value, true, 512, JSON_THROW_ON_ERROR | JSON_OBJECT_AS_ARRAY) ?: [] : [];
@@ -1509,7 +1523,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
         $attributesArray = $this->toArray();
 
 
-        return collect($attributesArray)->forget($this->appends)->forget($this->temporary)->toArray();
+        return collect($attributesArray)->except($this->appends)->except($this->temporary)->toArray();
 
         $attributes = collect($this->getArrayableAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
@@ -1597,8 +1611,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
         return $value instanceof GenericModel ? $value->jsonSerialize() : $value;
     }
 
-    public
-    static function make(array $attributes = []): static
+    public static function make(array $attributes = []): static
     {
         return (new static($attributes));
     }
@@ -1675,6 +1688,9 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
     }
 
 
+    /**
+     * @throws JsonException
+     */
     public function set($model, $key, $value, $attributes)
     {
         /*if ($key == 'separator') {
@@ -1715,7 +1731,7 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
             }
 
             return [
-                $key => json_encode($mergeResult),
+                $key => json_encode(self::make($mergeResult)->jsonSerialize()),
             ];
 
             /*if ($key) {
@@ -1771,7 +1787,8 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
             //['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
 
         } catch (\Exception $e) {
-            dump("exception set: $key", $value, $attributes[$key]);
+            dump("exception set: $key", $value, $attributes);
+            throw $e;
         }
     }
 }
