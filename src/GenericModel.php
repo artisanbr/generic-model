@@ -1623,51 +1623,6 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
     {
         try {
 
-            /*dump([
-                     'type'  => 'get',
-                     'key'   => $key,
-                     'value' => $value,
-
-                     //'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
-
-                     //'attributes' => $attributes,
-                     //'model'      => $model,
-                     //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
-                 ]);*/
-
-            /*if ($key) {
-                dump([
-                         'type'  => 'get',
-                         'key'   => $key,
-                         'value' => $value,
-
-                         'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
-
-                         'attributes' => $attributes,
-                         'model'      => $model,
-                         'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
-                     ]);
-            }*/
-
-            /*if($key == "breadcrumb"){
-                dd($this->isNullable() && empty($value));
-                dd("gModel get: $key", $value);
-                //dd($this->isNullable());
-            }*/
-
-            /*dump([
-                     'type'       => 'get',
-                     'key'        => $key,
-                     'value'      => $value,
-                     'attributes' => $attributes,
-                     'model'      => $model,
-                     'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5),
-                 ]);*/
-
-            //dd(new static($this->buildCastAttributes($value)));
-
-            //dd(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5), 'get:', $model, $key, $value, $this->castRawValue($value));
-
             return ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value));
 
         } catch (\Exception $e) {
@@ -1708,83 +1663,32 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
             $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
 
             $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+            //$mergeResult = array_replace($currentAttributes, $this->castRawValue($value));
 
             //$mergeResult = collect($currentAttributes)->replaceRecursive($this->castRawValue($value))->toArray();
             //$mergeResult = $this->castRawValue($value);
 
-            if (Str::contains(get_class($model), 'Resource') && $key == 'css') {
-                /*dump([
+            /*if ((Str::contains(get_class($model), 'Resource') && $key == 'css') ||  $key == 'items') {
+                dump([
                          'type'              => 'set',
                          'key'               => $key,
                          'value'             => $value,
-                         'currentAttributes' => $currentAttributes,
-                         'merge'             => $mergeResult,
-                         'result'            => [
-                             $key => json_encode($mergeResult),
-                         ],
+                         //'currentAttributes' => $currentAttributes,
+                         'current'             => $model->{$key},
+                         //'merge'             => $mergeResult,
+                         //'result'            => [$key => json_encode($mergeResult)],
 
                          //'attributes' => $attributes,
                          //'attributes_current' => $attributes[$key] ?? null,
-                         //'model'      => $model,
-                         'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25),
-                     ]);*/
-            }
+                         //'model_array'      => $this->toArray(),
+                         //'model'      => $this,
+                         //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25),
+                     ]);
+            }*/
 
             return [
                 $key => json_encode(self::make($mergeResult)->jsonSerialize()),
             ];
-
-            /*if ($key) {
-                dd([
-               'type'  => 'set',
-               'key'   => $key,
-               'value' => $value,
-               'currentAttributes' => $currentAttributes,
-               'merge' => $mergeResult,
-               'result' => [
-                   $key => json_encode($mergeResult),
-               ],
-
-               'attributes' => $attributes,
-               //'model'      => $model,
-               //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
-           ]);
-            }*/
-
-
-            /*return [$key => collect(static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize())->toJson()];
-
-            $currentCastValue = $this->transformModelValue($key, $attributes[$key] ?? []);
-            //dd('set:',$model, $key, $value, $attributes);
-
-            //Se o valor não for nulo:
-            $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
-
-            dd('set:', [$key => static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize()], debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10));
-
-            if ($value instanceof Arrayable) {
-                return [$key => json_encode($value->toArray())];
-            }
-
-            if ($value instanceof Jsonable) {
-                return [$key => $value->toJson()];
-            }
-
-            if (Str::isJson($value)) {
-                return [$key => $value];
-            }
-
-            return [$key => collect(static::make($currentAttributes)->fill($this->castRawValue($value))->jsonSerialize())->toJson()];*/
-
-            //$currentAttributes = $this->buildCastAttributes($attributes[$key] ?? []);
-
-            //dd('set:', $key, $value, $attributes, $currentAttributes, [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()], debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10));
-
-            //return [$key => collect(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize())->toJson()];
-
-
-            //return [$key => ($this->isNullable() && empty($value)) ? null : json_encode($value)];
-            //['address_line_one' => $value->lineOne, 'address_line_two' => $value->lineTwo];
 
         } catch (\Exception $e) {
             dump("exception set: $key", $value, $attributes);
