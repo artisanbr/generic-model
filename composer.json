@@ -1,14 +1,14 @@
 {
-  "name": "artisan-labs/laravel-gmodel",
-  "version": "dev-stable",
+  "name": "artisanbr/laravel-generic-model",
+  "type": "library",
   "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
   "keywords": [
     "laravel",
     "eloquent",
     "model",
-    "jenssegers/model"
+    "php"
   ],
-  "homepage": "https://github.com/artisanbr/model",
+  "homepage": "https://github.com/artisanbr/laravel-generic-model",
   "license": "MIT",
   "authors": [
     {
@@ -24,7 +24,7 @@
     "sort-packages": true
   },
   "require": {
-    "laravel/framework": ">=9",
+    "laravel/framework": "^9|^10|^11",
     "jenssegers/model": "^1.5"
   },
   "require-dev": {
