@@ -12,12 +12,12 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "Jens Segers",
-      "homepage": "https://jenssegers.com"
-    },
-    {
       "name": "Renalcio Carlos Jr.",
       "homepage": "https://github.com/renalcio"
+    },
+    {
+      "name": "Jens Segers",
+      "homepage": "https://jenssegers.com"
     }
   ],
   "config": {
@@ -33,7 +33,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ArtisanLabs\\GModel\\": "src/"
+      "ArtisanBR\\GModel\\": "src/"
     }
   },
   "autoload-dev": {

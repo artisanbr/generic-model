@@ -236,7 +236,7 @@ class ModelTest extends TestCase
 
     public function testTotallyGuarded()
     {
-        $this->expectException('ArtisanLabs\GModel\MassAssignmentException');
+        $this->expectException('ArtisanBR\GModel\MassAssignmentException');
 
         $model = new GenericModelStub();
         $model->guard(['*']);

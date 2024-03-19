@@ -4,11 +4,11 @@
  * Desenvolvido por Renalcio Carlos Jr.
  */
 
-namespace ArtisanLabs\GModel;
+namespace ArtisanBR\GModel;
 
-use ArtisanLabs\GModel\Concerns\HasCastables;
-use ArtisanLabs\GModel\Contracts\CastsAttributes as GenericCastsAttributes;
-use ArtisanLabs\GModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
+use ArtisanBR\GModel\Concerns\HasCastables;
+use ArtisanBR\GModel\Contracts\CastsAttributes as GenericCastsAttributes;
+use ArtisanBR\GModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Database\Eloquent\Castable;
@@ -1699,4 +1699,4 @@ abstract class GenericModel extends Model implements CastsAttributes, GenericCas
     }
 }
 
-class_alias(GenericModel::class, 'ArtisanLabs\GModel\Model');
+class_alias(GenericModel::class, 'ArtisanBR\GModel\Model');
