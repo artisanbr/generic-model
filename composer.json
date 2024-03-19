@@ -24,12 +24,7 @@
     "sort-packages": true
   },
   "require": {
-    "laravel/framework": "^9|^10|^11",
-    "jenssegers/model": "^1.5"
-  },
-  "require-dev": {
-    "php-coveralls/php-coveralls": "*",
-    "phpunit/phpunit": "*"
+    "laravel/framework": "^9|^10|^11"
   },
   "autoload": {
     "psr-4": {
