@@ -29,7 +29,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Jenssegers\Model\Model;
 use JsonException;
 use JsonSerializable;
 use ReflectionMethod;
