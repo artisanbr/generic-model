@@ -4,12 +4,12 @@
  * Desenvolvido por Renalcio Carlos Jr.
  */
 
-namespace ArtisanBR\GModel;
+namespace ArtisanBR\GenericModel;
 
 use ArrayAccess;
-use ArtisanBR\GModel\Concerns\HasCastables;
-use ArtisanBR\GModel\Contracts\CastsAttributes as GenericCastsAttributes;
-use ArtisanBR\GModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
+use ArtisanBR\GenericModel\Concerns\HasCastables;
+use ArtisanBR\GenericModel\Contracts\CastsAttributes as GenericCastsAttributes;
+use ArtisanBR\GenericModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
@@ -36,7 +36,7 @@ use ReflectionNamedType;
 use ReturnTypeWillChange;
 use UnitEnum;
 
-abstract class GenericModel implements ArrayAccess, Arrayable, Jsonable, JsonSerializable, CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
+abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializable, CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
 {
     use HasTimestamps, HasCastables;
 
@@ -1721,7 +1721,7 @@ abstract class GenericModel implements ArrayAccess, Arrayable, Jsonable, JsonSer
         return $this;
     }
 
-    protected function castRawValue($value): array
+    protected function castRawValue($value)
     {
 
         try {
@@ -2005,7 +2005,7 @@ abstract class GenericModel implements ArrayAccess, Arrayable, Jsonable, JsonSer
     public function set($model, $key, $value, $attributes): array
     {
         /*if ($key == 'separator') {
-            dd("gModel set: $key", $value, $attributes[$key], $attributes, $model);
+            dd("GenericModel set: $key", $value, $attributes[$key], $attributes, $model);
             dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
         }*/
 
@@ -2051,4 +2051,4 @@ abstract class GenericModel implements ArrayAccess, Arrayable, Jsonable, JsonSer
     }
 }
 
-class_alias(GenericModel::class, 'ArtisanBR\GModel\Model');
+class_alias(Model::class, 'ArtisanBR\GenericModel\GenericModel');

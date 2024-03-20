@@ -1,8 +1,8 @@
 <?php
 
-use ArtisanBR\GModel\Contracts\CastsAttributes;
-use ArtisanBR\GModel\Contracts\CastsInboundAttributes;
-use ArtisanBR\GModel\GenericModel;
+use ArtisanBR\GenericModel\Contracts\CastsAttributes;
+use ArtisanBR\GenericModel\Contracts\CastsInboundAttributes;
+use ArtisanBR\GenericModel\GenericModel;
 use PHPUnit\Framework\TestCase;
 
 /**

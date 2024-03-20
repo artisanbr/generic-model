@@ -1,6 +1,6 @@
 <?php
 
-use ArtisanBR\GModel\GenericModel;
+use ArtisanBR\GenericModel\GenericModel;
 
 class GenericModelStub extends GenericModel
 {

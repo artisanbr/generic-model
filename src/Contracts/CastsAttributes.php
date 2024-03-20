@@ -1,4 +1,4 @@
-<?php namespace ArtisanBR\GModel\Contracts;
+<?php namespace ArtisanBR\GenericModel\Contracts;
 
 interface CastsAttributes
 {

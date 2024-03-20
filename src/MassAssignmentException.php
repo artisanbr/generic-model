@@ -1,4 +1,4 @@
-<?php namespace ArtisanBR\GModel;
+<?php namespace ArtisanBR\GenericModel;
 
 class MassAssignmentException extends \RuntimeException
 {

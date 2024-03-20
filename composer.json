@@ -30,7 +30,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ArtisanBR\\GModel\\": "src/"
+      "ArtisanBR\\GenericModel\\": "src/"
     }
   },
   "autoload-dev": {
