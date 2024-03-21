@@ -2009,7 +2009,7 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
         return new class($currentClass) implements CastsAttributes
         {
 
-            private $castClass;
+            private string $castClass;
 
             public function __construct(string $currentClass)
             {
