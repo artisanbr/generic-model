@@ -7,6 +7,7 @@
 namespace ArtisanBR\GenericModel;
 
 use ArrayAccess;
+use ArrayObject;
 use ArtisanBR\GenericModel\Concerns\HasCastables;
 use ArtisanBR\GenericModel\Contracts\CastsAttributes as GenericCastsAttributes;
 use ArtisanBR\GenericModel\Contracts\CastsInboundAttributes as GenericCastsInboundAttributes;
@@ -19,6 +20,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Support\Arr;
@@ -36,7 +38,7 @@ use ReflectionNamedType;
 use ReturnTypeWillChange;
 use UnitEnum;
 
-abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializable, CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
+abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, JsonSerializable, CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
 {
     use HasTimestamps, HasCastables;
 
@@ -1979,77 +1981,28 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     public function get($model, $key, $value, $attributes): array|static|null
     {
-        try {
+        return ($this->isNullable() && is_null($value)) ? null : new static($this->castRawValue($value));
 
-            return ($this->isNullable() && is_null($value)) ? null : new static($this->castRawValue($value));
-
-        } catch (Exception $e) {
-            //dump("exception get: $key", $value, $attributes[$key]);
-            dump([
-                     'exception type' => 'get',
-                     'key'            => $key,
-                     'value'          => $value,
-
-                     //'result' => ($this->isNullable() && empty($value)) ? null : new static($this->castRawValue($value)),
-
-                     'attributes' => $attributes,
-                     //'model'      => $model,
-                     //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10),
-                     'error'      => $e->getMessage(),
-                 ]);
-            throw $e;
-        }
     }
 
-    /**
-     * @throws JsonException|Exception
-     */
-    public function set($model, $key, $value, $attributes): ?string
+
+    public function set($model, $key, $value, $attributes): array
     {
-        /*if ($key == 'separator') {
-            dd("GenericModel set: $key", $value, $attributes[$key], $attributes, $model);
-            dd(static::make($currentAttributes)->fill($this->buildCastAttributes($value))->jsonSerialize());
-        }*/
-
-        try {
-
-            //Se o valor for nulo e a model atual for nullable
-            if (is_null($value) && $this->isNullable()) {
-                return [$key => null]; //null;
-            }
-
-            $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
-
-            $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
-            //$mergeResult = array_replace($currentAttributes, $this->castRawValue($value));
-
-            //$mergeResult = collect($currentAttributes)->replaceRecursive($this->castRawValue($value))->toArray();
-            //$mergeResult = $this->castRawValue($value);
-
-            /*if ((Str::contains(get_class($model), 'Resource') && $key == 'css') ||  $key == 'items') {
-                dump([
-                         'type'              => 'set',
-                         'key'               => $key,
-                         'value'             => $value,
-                         //'currentAttributes' => $currentAttributes,
-                         'current'             => $model->{$key},
-                         //'merge'             => $mergeResult,
-                         //'result'            => [$key => json_encode($mergeResult)],
-
-                         //'attributes' => $attributes,
-                         //'attributes_current' => $attributes[$key] ?? null,
-                         //'model_array'      => $this->toArray(),
-                         //'model'      => $this,
-                         //'trace'      => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25),
-                     ]);
-            }*/
-
-            return json_encode(self::make($mergeResult)->jsonSerialize()); //[$key => json_encode(self::make($mergeResult)->jsonSerialize())];
-
-        } catch (\Exception $e) {
-            dump("exception set: $key", $value, $attributes);
-            throw $e;
+        //Se o valor for nulo e a model atual for nullable
+        if (is_null($value) && $this->isNullable()) {
+            return [$key => null]; //null;
         }
+
+        $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
+
+        $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+
+        return [$key => Json::encode(self::make($mergeResult)->jsonSerialize())];
+    }
+
+    public static function castUsing(array $arguments)
+    {
+        return static::class;
     }
 }
 
