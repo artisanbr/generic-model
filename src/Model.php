@@ -38,7 +38,7 @@ use ReflectionNamedType;
 use ReturnTypeWillChange;
 use UnitEnum;
 
-abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, JsonSerializable
+abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonable, JsonSerializable, GenericCastsAttributes
 {
     use HasTimestamps, HasCastables;
 
@@ -1979,16 +1979,16 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
     /**
      * @throws JsonException|Exception
      */
-    /*public function get($model, $key, $value, $attributes): array|static|null
+    public function get($model, $key, $value, $attributes): array|static|null
     {
         return ($this->isNullable() && is_null($value)) ? null : new static($this->castRawValue($value));
 
-    }*/
+    }
 
     /**
      * @throws JsonException|Exception
      */
-    /*public function set($model, $key, $value, $attributes): ?string
+    public function set($model, $key, $value, $attributes): ?string
     {
         //Se o valor for nulo e a model atual for nullable
         if (is_null($value) && $this->isNullable()) {
@@ -2000,9 +2000,9 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
         $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
 
         return json_encode(self::make($mergeResult)->jsonSerialize());
-    }*/
+    }
 
-    public static function castUsing(array $arguments)
+    /*public static function castUsing(array $arguments)
     {
         $currentClass = self::class;
 
@@ -2053,7 +2053,7 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
                 return $value->getArrayCopy();
             }
         };
-    }
+    }*/
 }
 
 class_alias(Model::class, 'ArtisanBR\GenericModel\GenericModel');
