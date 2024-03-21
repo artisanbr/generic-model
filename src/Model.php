@@ -2001,11 +2001,10 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
         }
     }
 
-
     /**
      * @throws JsonException|Exception
      */
-    public function set($model, $key, $value, $attributes): array
+    public function set($model, $key, $value, $attributes): ?string
     {
         /*if ($key == 'separator') {
             dd("GenericModel set: $key", $value, $attributes[$key], $attributes, $model);
@@ -2045,7 +2044,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
                      ]);
             }*/
 
-            return [$key => json_encode(self::make($mergeResult)->jsonSerialize())];
+            return json_encode(self::make($mergeResult)->jsonSerialize()); //[$key => json_encode(self::make($mergeResult)->jsonSerialize())];
 
         } catch (\Exception $e) {
             dump("exception set: $key", $value, $attributes);
