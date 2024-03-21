@@ -1979,14 +1979,16 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
     /**
      * @throws JsonException|Exception
      */
-    public function get($model, $key, $value, $attributes): array|static|null
+    /*public function get($model, $key, $value, $attributes): array|static|null
     {
         return ($this->isNullable() && is_null($value)) ? null : new static($this->castRawValue($value));
 
-    }
+    }*/
 
-
-    public function set($model, $key, $value, $attributes): array
+    /**
+     * @throws JsonException|Exception
+     */
+    /*public function set($model, $key, $value, $attributes): ?string
     {
         //Se o valor for nulo e a model atual for nullable
         if (is_null($value) && $this->isNullable()) {
@@ -1997,12 +1999,60 @@ abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, Json
 
         $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
 
-        return [$key => Json::encode(self::make($mergeResult)->jsonSerialize())];
-    }
+        return json_encode(self::make($mergeResult)->jsonSerialize());
+    }*/
 
     public static function castUsing(array $arguments)
     {
-        return static::class;
+        $currentClass = self::class;
+
+        return new class($currentClass) implements CastsAttributes
+        {
+
+            private $castClass;
+
+            public function __construct(string $currentClass)
+            {
+                $this->castClass = $currentClass;
+            }
+
+            public function get($model, $key, $value, $attributes)
+            {
+                if (! isset($attributes[$key])) {
+                    return;
+                }
+
+                $data = Json::decode($attributes[$key]);
+
+                return is_array($data) ? new $this->castClass($data) : null;
+            }
+
+            public function set($model, $key, $value, $attributes)
+            {
+
+                //Se o valor for nulo e a model atual for nullable
+                if (is_null($value) && $this->isNullable()) {
+                    return null; //null;
+                }
+
+                $classInstance = new $this->castClass();
+
+                $currentAttributes = $classInstance->castRawValue($attributes[$key] ?? []);
+
+                $mergeResult = array_replace_recursive($currentAttributes, $classInstance->castRawValue($value));
+
+                //return json_encode(self::make($mergeResult)->jsonSerialize());
+
+
+                return [$key => Json::encode($classInstance::make($mergeResult)->jsonSerialize())];
+                //return [$key => Json::encode($value)];
+            }
+
+            public function serialize($model, string $key, $value, array $attributes)
+            {
+                return $value->getArrayCopy();
+            }
+        };
     }
 }
 
