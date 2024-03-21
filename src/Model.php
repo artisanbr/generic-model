@@ -38,7 +38,7 @@ use ReflectionNamedType;
 use ReturnTypeWillChange;
 use UnitEnum;
 
-abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, JsonSerializable, CastsAttributes, GenericCastsAttributes, GenericCastsInboundAttributes
+abstract class Model implements Castable, ArrayAccess, Arrayable, Jsonable, JsonSerializable
 {
     use HasTimestamps, HasCastables;
 
