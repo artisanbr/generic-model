@@ -1,7 +1,25 @@
-Generic Models
+Laravel Generic Models
 =====
 
 Este pacote provê a criação de Models Genéricas baseadas na estrutura do Eloquent do Laravel com melhorias e adaptações do pacote **jenssegers/model**.
+
+# Instalação
+
+```
+
+composer require artisanbr/laravel-generic-model
+
+```
+
+# Versões
+
+## Tabela de Versões
+
+| Laravel Version | Package Version |
+|-----------------|-----------------|
+| 9 & 10          | v1.0.0          |
+| 11              | v2.0.0          |
+
 
 Features e Adaptações
 --------
