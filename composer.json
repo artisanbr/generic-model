@@ -1,5 +1,5 @@
 {
-  "name": "artisanbr/laravel-generic-model",
+  "name": "artisanbr/generic-model",
   "type": "library",
   "description": "An Laravel eloquent-like model class, for Laravel and other frameworks, based and inspired in jenssegers/model",
   "keywords": [
@@ -8,7 +8,7 @@
     "model",
     "php"
   ],
-  "homepage": "https://github.com/artisanbr/laravel-generic-model",
+  "homepage": "https://github.com/artisanbr/generic-model",
   "license": "MIT",
   "authors": [
     {

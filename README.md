@@ -7,7 +7,7 @@ Este pacote provê a criação de Models Genéricas baseadas na estrutura do Elo
 
 ```
 
-composer require artisanbr/laravel-generic-model
+composer require artisanbr/generic-model
 
 ```
 
