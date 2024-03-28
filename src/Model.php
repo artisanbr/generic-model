@@ -1206,7 +1206,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
     /**
      * Set the value of an enum castable attribute.
      */
-    protected function setEnumCastableAttribute(string $key, ?BackedEnum $value): void
+    protected function setEnumCastableAttribute(string $key, null|BackedEnum|string $value): void
     {
         $enumClass = $this->getCasts()[$key];
 
