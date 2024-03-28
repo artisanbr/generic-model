@@ -1552,7 +1552,8 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
         // which simply lets the developers tweak the attribute as it is set on
         // this model, such as "json_encoding" a listing of data for storage.
         if ($this->hasSetMutator($key)) {
-            return $this->setMutatedAttributeValue($key, $value);
+            $this->setMutatedAttributeValue($key, $value);
+            return $this;
         }
         else if ($this->hasAttributeSetMutator($key)) {
             return $this->setAttributeMarkedMutatedAttributeValue($key, $value);
