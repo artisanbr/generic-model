@@ -613,10 +613,10 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
      */
     public function jsonSerialize(): array
     {
-        $attributesArray = $this->toArray();
+        /*$attributesArray = $this->toArray();
 
 
-        return collect($attributesArray)->except($this->appends)->except($this->temporary)->toArray();
+        return collect($attributesArray)->except($this->appends)->except($this->temporary)->toArray();*/
 
         $attributes = collect($this->getArrayableAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
@@ -2001,8 +2001,8 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
 
-        //$mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
-        $mergeResult = array_replace($currentAttributes, $this->castRawValue($value));
+        $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+        //$mergeResult = array_replace($currentAttributes, $this->castRawValue($value));
 
         return [$key => json_encode(self::make($mergeResult)->jsonSerialize())];
     }
