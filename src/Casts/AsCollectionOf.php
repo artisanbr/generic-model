@@ -29,6 +29,8 @@ class AsCollectionOf extends AsCollection
                     return collect();
                 }
 
+                dd($value);
+
                 $data = !is_string($attributes[$key]) ? $attributes[$key] : json_decode($attributes[$key], true);
 
                 return GenericCollection::wrap($data ?? [])->mapInto($this->itemClass)->values();
