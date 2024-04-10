@@ -263,7 +263,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $fillable = $this->fillableFromArray($attributes);
 
-        $fillable = collect($fillable)->filter->toArray();
+        $fillable = collect($fillable)->filter()->toArray();
 
         foreach ($fillable as $key => $value) {
             // The developers may choose to place some attributes in the "fillable" array
@@ -968,6 +968,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
     {
         return $this->getAttributes()[$key] ?? null;
     }
+
 
     /**
      * Determine if a get mutator exists for an attribute.
