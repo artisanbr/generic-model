@@ -2004,10 +2004,10 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $currentAttributes = $this->castRawValue($attributes[$key] ?? []);
 
-        //$mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
+        $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
         //$mergeResult = array_replace($currentAttributes, $this->castRawValue($value));
 
-        return [$key => json_encode(self::make($this->castRawValue($value))->jsonSerialize())];
+        return [$key => json_encode(self::make($mergeResult)->jsonSerialize())];
     }
 
     /*public static function castUsing(array $arguments)
