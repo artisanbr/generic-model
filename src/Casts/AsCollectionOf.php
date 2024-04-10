@@ -42,8 +42,7 @@ class AsCollectionOf extends AsCollection
 
                 $json_value = is_string($value) ? $value : GenericCollection::wrap($value ?? [])->toJson();
 
-                //return [$key => $json_value];
-                return $json_value;
+                return [$key => $json_value];
             }
         };
     }
