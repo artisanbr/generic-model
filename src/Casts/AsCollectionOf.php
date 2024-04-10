@@ -29,9 +29,10 @@ class AsCollectionOf extends AsCollection
                     return collect();
                 }
 
-                dd($value);
+                //dd($value);
 
-                $data = !is_string($attributes[$key]) ? $attributes[$key] : json_decode($attributes[$key], true);
+                //$data = !is_string($attributes[$key]) ? $attributes[$key] : json_decode($attributes[$key], true);
+                $data = !is_string($value) ? $value : json_decode($value, true);
 
                 return GenericCollection::wrap($data ?? [])->mapInto($this->itemClass)->values();
             }
