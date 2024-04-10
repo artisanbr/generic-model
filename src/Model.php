@@ -263,6 +263,8 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $fillable = $this->fillableFromArray($attributes);
 
+        $fillable = collect($fillable)->filter->toArray();
+
         foreach ($fillable as $key => $value) {
             // The developers may choose to place some attributes in the "fillable" array
             // which means only those attributes may be set through mass assignment to
