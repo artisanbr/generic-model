@@ -1983,7 +1983,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
     /**
      * @throws JsonException|Exception
      */
-    public function get($model, $key, $value, $attributes): array|static|null
+    public function get($model, $key, $value, $attributes)
     {
         return ($this->isNullable() && is_null($value)) ? null : new static($this->castRawValue($value));
 
@@ -1992,7 +1992,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
     /**
      * @throws JsonException|Exception
      */
-    public function set($model, $key, $value, $attributes): ?string
+    public function set($model, $key, $value, $attributes)
     {
         //Se o valor for nulo e a model atual for nullable
         if (is_null($value) && $this->isNullable()) {
@@ -2003,7 +2003,7 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $mergeResult = array_replace_recursive($currentAttributes, $this->castRawValue($value));
 
-        return json_encode(self::make($mergeResult)->jsonSerialize());
+        return [$key => json_encode(self::make($mergeResult)->jsonSerialize())];
     }
 
     /*public static function castUsing(array $arguments)
