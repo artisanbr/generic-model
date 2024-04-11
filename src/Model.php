@@ -263,8 +263,6 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
 
         $fillable = $this->fillableFromArray($attributes);
 
-        $fillable = collect($fillable)->filter()->toArray();
-
         foreach ($fillable as $key => $value) {
             // The developers may choose to place some attributes in the "fillable" array
             // which means only those attributes may be set through mass assignment to
@@ -615,10 +613,10 @@ abstract class Model implements CastsAttributes, ArrayAccess, Arrayable, Jsonabl
      */
     public function jsonSerialize(): array
     {
-        /*$attributesArray = $this->toArray();
+        $attributesArray = $this->toArray();
 
 
-        return collect($attributesArray)->except($this->appends)->except($this->temporary)->toArray();*/
+        return collect($attributesArray)->except($this->appends)->except($this->temporary)->toArray();
 
         $attributes = collect($this->getArrayableAttributes())->forget($this->appends)->forget($this->temporary)->toArray();
 
